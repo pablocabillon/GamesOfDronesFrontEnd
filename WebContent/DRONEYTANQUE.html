@@ -1,0 +1,245 @@
+<html>
+<head>
+<meta charset="utf-8" />
+<title>War Drones</title>
+	<script type="text/javascript" src="js/phaser.min.js">
+	
+	</script>
+</head>
+<body>
+	<script type="text/javascript">
+		var ancho = 800;//1350;
+		var alto = 600;//680;
+		var mask=0;
+		var drone;
+		var controles;
+		var izqT;
+		var derT;
+		var arribaT;
+		var abajoT;
+		var bala;
+		var balin;
+		var bomba;
+		var fuego;
+		var tiro;
+		var tanque;
+		var fondo;
+		var vision;
+		var velocidadA = 500;
+		var velocidadT = 300;
+		var vista = "tanque";
+		var webSocket =new WebSocket('ws://172.20.10.14:8080/WebSocketTest/websocket');
+		var datosAEnviar = {};
+		var drones = [];
+		//var vista = "aereo";
+		var mundo = new Phaser.Game(ancho, alto, Phaser.CANVAS, 'mundo', {preload: preload, create: create, update: update});
+		
+		function preload() {
+			
+			//cargaran los sprites. 			
+			mundo.load.image('tank','sprites/DroneTanqueArriba.png');
+			mundo.load.image('aereo','sprites/DroneAereoArriba.png');
+			mundo.load.image('fondo','sprites/fondo.png');
+			mundo.load.image('bull','sprites/bullet.png');
+			mundo.load.image('bomb','sprites/bomba.png');
+			mundo.load.image('balaT','sprites/balin.png');
+			
+		}
+		
+		function create() {
+			
+			//agregar fisica
+			//mundo.physics.startSystem(Phaser.Physics.ARCADE);
+			//se agrega el fondo. 
+			fondo = mundo.add.sprite(0, 0, 'fondo'); 
+			
+			mundo.world.setBounds(0, 0, 1600, 1200);
+			
+			vision = mundo.add.graphics(0,0);
+			vision.beginFill(0xffffff);
+			vision.drawCircle(10,10,400);
+			fondo.mask = vision;
+			
+			creoTanque();
+			creoDrone();
+			
+			
+			//carga bala (puede ser la bomba por como se maneja)				
+			bala = mundo.add.weapon(1, 'bull');	
+			mundo.physics.arcade.enable(bala);
+			bala.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
+			bala.bulletAngleOffset = 270;
+			bala.bulletSpeed = 600;
+			bala.trackSprite(drone, 0, 0, true);
+			
+			// Bala tanque
+			balin = mundo.add.weapon(2, 'balaT');	
+			mundo.physics.arcade.enable(bala);
+			balin.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
+			balin.bulletAngleOffset = 270;
+			balin.bulletSpeed = 600;
+			balin.trackSprite(tanque, 0, 0, true);
+
+			
+			//carga bomba
+			bomba = mundo.add.weapon(1, 'bomb')
+			mundo.physics.arcade.enable(bomba);
+			bomba.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
+			bomba.bulletAngleOffset = 270;
+			bomba.bulletSpeed = 400;
+			bomba.trackSprite(drone, 0, 0, true);
+			
+			//controles
+			controles = mundo.input.keyboard.createCursorKeys();
+			fuego = mundo.input.keyboard.addKey(Phaser.KeyCode.SPACEBAR);
+			va = mundo.input.keyboard.addKey(Phaser.Keyboard.B);	
+			tiro = mundo.input.keyboard.addKey(Phaser.Keyboard.Z);
+			
+			derT = mundo.input.keyboard.addKey(Phaser.KeyCode.D);
+			izqT = mundo.input.keyboard.addKey(Phaser.KeyCode.A);
+			arribaT = mundo.input.keyboard.addKey(Phaser.KeyCode.W);
+			abajoT = mundo.input.keyboard.addKey(Phaser.KeyCode.S);
+			
+			if(vista == "tanque"){
+				mundo.camera.follow(tanque);
+				vision.x = tanque.body.x+36;
+				vision.y = tanque.body.y+20;
+			}else{
+				mundo.camera.follow(drone);
+				vision.x = drone.body.x+36;
+				vision.y = drone.body.y+20;
+			}
+		}
+		
+		function update() {
+			
+			mundo.physics.arcade.overlap(bala.bullets, tanque, disparoDrone, null, this);
+			mundo.physics.arcade.overlap(bomba.bullets, tanque, boom, null, this);
+			mundo.physics.arcade.overlap(balin.bullets, drone, disparoTank, null, this);
+			
+			
+			drone.body.velocity.x = 0;
+			drone.body.velocity.y = 0;
+			tanque.body.velocity.x = 0;
+			tanque.body.velocity.y = 0;
+			
+			seteoControlesAereos();
+			seteoControlesTerrestres();
+			
+			disparos();
+						
+
+							
+						
+		}
+		
+		function disparoDrone() {
+			tanque.kill();
+			
+		}
+		
+		function disparoTank() {
+			drone.kill();
+			
+		}
+		
+		function boom() {
+			tanque.kill();
+			
+		}
+	
+		function seteoControlesAereos(){
+			// CONTROLES AEREO // 
+			if (controles.left.isDown) {
+				drone.angle = 180;
+				
+				drone.body.velocity.x = -velocidadA;
+				
+			}
+			else if (controles.right.isDown) {
+				drone.angle = 360;
+				drone.body.velocity.x = velocidadA;
+			
+			}
+			else if (controles.up.isDown) {
+				drone.angle = 270;
+				drone.body.velocity.y = -velocidadA;
+			
+			}
+			else if (controles.down.isDown) {
+				drone.angle = 90;					
+				drone.body.velocity.y = velocidadA;				
+			}
+			
+			// FIN CONTROLES AEREO //
+			
+		}
+		
+		function seteoControlesTerrestres(){
+			// CONTROLES TANQUE
+			if (derT.isDown) {
+				tanque.angle = 360;
+				tanque.body.velocity.x = velocidadT;
+				
+			}
+			else if (izqT.isDown) {
+					tanque.angle = 180;
+					tanque.body.velocity.x = -velocidadT;
+								
+			}
+			else if (arribaT.isDown) {
+					tanque.angle = 270;
+					tanque.body.velocity.y = -velocidadT;			
+			}
+			else if (abajoT.isDown) {
+				tanque.angle = 90;					
+				tanque.body.velocity.y = velocidadT;			
+			}
+			
+			// FIN CONTROLES TANQUE
+			
+			
+		}
+
+				
+		function disparos(){
+			if (tiro.isDown){
+				balin.fire();
+			}
+					
+			if (fuego.isDown){
+				bala.fire();
+			}
+			
+			if (va.isDown){
+				bomba.fire();
+			}
+
+		}
+		
+		function creoDrone(){
+				//Carga del Drone
+				drone = mundo.add.sprite(65, 65,'aereo');
+				drone.scale.setTo(0.5,0.5);
+				drone.anchor.setTo(0.5,0.5);
+				drone.angle = 180;
+				mundo.physics.arcade.enable(drone);
+				drone.body.collideWorldBounds = true;
+				
+		}
+		
+		function creoTanque(){
+			//carga tanque
+			tanque = mundo.add.sprite(ancho - 65, alto - 65,'tank');
+			tanque.scale.setTo(0.5,0.5);
+			tanque.anchor.setTo(0.5,0.5);
+			mundo.physics.arcade.enable(tanque);
+			tanque.body.collideWorldBounds = true;
+
+		}
+		
+
+	</script>
+
+</body>
+</html>

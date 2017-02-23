@@ -1,0 +1,116 @@
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Circulo</title>
+	<script type="text/javascript" src="js/phaser.js">
+	
+	</script>
+</head>
+<body>
+	<script type="text/javascript">
+		var game = new Phaser.Game(800, 600, Phaser.CANVAS, 'juego', {preload: preload, create: create, update: update});
+		
+		var mask=0;		
+		var derT;
+		var izqT;
+		var upT;
+		var abaT;
+		var tanke;
+		var vision;
+		var fondo;
+		function preload() {
+			
+			//cargaran los sprites. 			
+			game.load.image('tank','sprites/Tank.png');
+			game.load.image('fondo','sprites/fondo2.png');
+			
+			
+			}
+		
+		
+		
+		function create() {
+			
+			//game.stage.backgroundColor = 0x4488cc;
+			
+			fondo = game.add.sprite(0, 0, 'fondo'); 
+			game.world.setBounds(0, 0, 1920, 1200);
+			
+			vision = game.add.graphics(0,0);
+			//vision.beginFill(0xFFFFFF);
+			vision.drawCircle(10,10, 300);
+			
+			/*
+			var vision = game.add.graphics(100,100);
+			vision.beginFill(0xFF0000);
+			vision.drawCircle(100,100, 400);
+			*/ 
+			
+			tanke = game.add.sprite(300, 300,'tank');
+			tanke.scale.setTo(0.5,0.5);
+			tanke.anchor.setTo(0.5,0.5);
+			game.physics.arcade.enable(tanke);
+			tanke.body.collideWorldBounds = true;
+			
+			
+			derT = game.input.keyboard.addKey(Phaser.KeyCode.D);
+			izqT = game.input.keyboard.addKey(Phaser.KeyCode.A);
+			upT = game.input.keyboard.addKey(Phaser.KeyCode.W);
+			abaT = game.input.keyboard.addKey(Phaser.KeyCode.S);
+			
+			game.camera.follow(tanke);
+			
+		}
+		
+		function update() {
+			
+			tanke.body.velocity.x = 0;
+			tanke.body.velocity.y = 0;
+			
+			
+			if (derT.isDown) {
+				//tanque.angle = 360;
+				tanke.body.velocity.x = 100;
+				
+			}
+			else if (izqT.isDown) {
+					//tanque.angle = 360;
+					tanke.body.velocity.x = -100;
+								
+			}
+			else if (upT.isDown) {
+					//tanque.angle = 270;
+					tanke.body.velocity.y = -100;
+			}
+			else if (abaT.isDown) {
+					//tanque.angle = 270;
+					tanke.body.velocity.y = 100;
+			}
+			
+			
+			
+			
+			/*
+			mask = tanke.vision;
+			game.world.mask = mask;
+
+			mask.x = tanke.body.x + 36;
+			mask.y = tanke.el.body.y + 36;
+			*/
+			
+			//mask = vision;
+			fondo.mask = vision;
+			//game.world.mask = mask;
+			vision.x = tanke.body.x+36;
+			vision.y = tanke.body.y+20;
+			console.log("anda");
+			
+		}
+		
+		
+		
+		
+	</script>
+
+</body>
+</html>

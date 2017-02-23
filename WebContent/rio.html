@@ -1,0 +1,165 @@
+<html>
+<head>
+<meta charset="utf-8" />
+<title>War Drones</title>
+	<script type="text/javascript" src="js/phaser.min.js">
+	
+	</script>
+</head>
+<body>
+	<script type="text/javascript">
+		var mundo = new Phaser.Game(400, 300, Phaser.CANVAS, 'mundo', {preload: preload, create: create, update: update});
+		
+		var dron;
+		var controles;
+		var izqT;
+		var derT;
+		var upT;
+		var bala;
+		var balin;
+		var bomba;
+		var va;
+		var fuego;
+		var tiro;
+		var tanque;
+		var cant = 0;
+		var golpe = 0;
+		var cir;
+		var pasaje;
+		var rio;
+		var plataformas;
+		var plataformas2;
+		var paso;
+		
+		function preload() {
+			
+			//cargaran los sprites. 			
+			mundo.load.image('fondo','sprites/fondo2.png');
+			mundo.load.image('aereo','sprites/dronC.png');
+			mundo.load.image('river','sprites/rio.png');
+			mundo.load.image('pasaje','sprites/puente.png');
+		
+		
+		
+			
+			}
+		
+		function create() {
+			
+			//agregar fisica
+			mundo.physics.startSystem(Phaser.Physics.ARCADE);
+			
+			
+			
+					
+			//se agrega el fondo. 
+			fondo = mundo.add.sprite(0, 0, 'fondo'); 
+			mundo.world.setBounds(0, 0, 1920, 1200);
+			
+			//mundo.add.sprite(0, 0, 'backg');
+			//Rio
+			
+			//rio = mundo.add.sprite(400, 100, 'river'); 
+			//rio.anchor.setTo(0.1,0.1);
+			
+			plataformas = mundo.add.group();
+			plataformas.enableBody = true;
+			
+			plataformas2 = mundo.add.group();
+			plataformas2.enableBody = true;
+			
+			rio = plataformas.create(400, 100, 'river');
+			rio.anchor.setTo(0.1,0.1);
+			rio.body.immovable = true;
+			
+			puente = plataformas2.create(350, 400, 'pasaje');
+			puente.body.immovable = true;
+			
+			
+			//Carga del Dron
+			dron = mundo.add.sprite(10, 100,'aereo');
+			dron.scale.setTo(0.5,0.5);
+			dron.anchor.setTo(0.5,0.5);
+			dron.angle = 180;
+			mundo.physics.arcade.enable(dron);
+			dron.body.collideWorldBounds = true;
+			
+			
+			//controles
+			controles = mundo.input.keyboard.createCursorKeys();
+			fuego = mundo.input.keyboard.addKey(Phaser.KeyCode.SPACEBAR);
+			va = mundo.input.keyboard.addKey(Phaser.Keyboard.B);
+			derT = mundo.input.keyboard.addKey(Phaser.Keyboard.ALT);
+			izqT = mundo.input.keyboard.addKey(Phaser.KeyCode.CONTROL);
+			upT = mundo.input.keyboard.addKey(Phaser.Keyboard.SHIFT);	
+			tiro = mundo.input.keyboard.addKey(Phaser.Keyboard.Z);
+			
+			
+			// Camara
+			
+			mundo.camera.follow(dron);
+			
+		}
+		
+		
+		function update() {
+				
+			mundo.physics.arcade.collide(dron, rio);
+			mundo.physics.arcade.overlap(dron, puente, pase, null, this);
+			
+			paso= false;
+			dron.body.velocity.x = 0;
+			dron.body.velocity.y = 0;
+
+			
+			// CONTROLES AEREO // 
+			if (controles.left.isDown) {
+				dron.angle = 180;
+				
+				dron.body.velocity.x = -100;
+				
+			}
+			else if (controles.right.isDown) {
+				dron.angle = 360;
+				dron.body.velocity.x = 100;
+			
+			}
+			else if (controles.up.isDown) {
+				dron.angle = 270;
+				dron.body.velocity.y = -100;
+			
+			}
+			else if (controles.down.isDown) {
+				dron.angle = 90;					
+				dron.body.velocity.y = 100;				
+			}
+			
+			// FIN CONTROLES AEREO //
+			
+			
+			if(paso){
+				rio.body.checkCollision.left = true;
+				rio.body.checkCollision.right = true;
+			}
+	
+		}
+		
+		function pase (){
+			rio.body.checkCollision.left = false;
+			rio.body.checkCollision.right = false;
+			paso = true;		
+		}
+		
+		/*
+		function resetRio(){
+			rio.body.checkCollision.left = true;
+			rio.body.checkCollision.right = true;
+			
+		}
+		*/
+		
+		
+	</script>
+
+</body>
+</html>

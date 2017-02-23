@@ -8,7 +8,7 @@
 </head>
 <body>
 	<script type="text/javascript">
-		var mundo = new Phaser.Game(500, 500, Phaser.AUTO, 'mundo', {preload: preload, create: create, update: update});
+		var mundo = new Phaser.Game(800, 600, Phaser.AUTO, 'mundo', {preload: preload, create: create, update: update});
 		
 		var dron;
 		var controles;
@@ -23,72 +23,9 @@
 		var tiro;
 		var tanque;
 		var cant = 0;
-		var cursors;
-		var webSocket =new WebSocket('ws://192.168.255.214:8080/WebSocketTest/websocket');
-		var datosAEnviar = {};
-		var drones = [];
-		//var hayFuegoAereo;
-		//var hayFuegoTerrestre;
-		var droneTerrestre;
-		var droneAereo;
-		webSocket.onerror = function(event) {
-      onError(event)
-    };
-
-    webSocket.onopen = function(event) {
-      onOpen(event)
-    };
-
-    webSocket.onmessage = function(event) {
-      onMessage(event)
-    };
-    
-
-    function onMessage(event) {
-    	var json = event.data;
-    	var contenido = JSON.parse(json);
-    	for(var i in contenido.drones) {
-    		if(contenido.drones[i].tipo == "aereo"){
-    			dron.x = contenido.drones[i].x;
-    	    	dron.y = contenido.drones[i].y;
-    	    	dron.angle = contenido.drones[i].angle;
-    	    	dron.rotation = contenido.drones[i].rotation;
-    	     	if(contenido.drones[i].bala == "true"){
-    	    		//hayFuegoAereo = true;
-    	    		bala.fire();
-    	    		contenido.drones[i].bala = "false";
-    	    	}
-    	    	if(contenido.drones[i].bomba == "true")
-    	    		contenido.drones[i].bomba = "false";
-    	     		//dispara bomba	
-    		}else{
-    			//Es terrestre
-    			tanque.x = contenido.drones[i].x;
-    			tanque.y = contenido.drones[i].y;
-    			tanque.angle = contenido.drones[i].angle;
-    			tanque.rotation = contenido.drones[i].rotation;
-    			if(contenido.drones[i].bala == "true"){
-    				//hayFuegoTerrestre = true;
-    				balin.fire();
-    				contenido.drones[i].bala = "false";
-    			}
-    			if(contenido.drones[i].vida == "false")
-    			 	tanque.kill();
-    			
-    		}
-    		    
-    	}
-    	
-    }	
-    
-
-    function onOpen(event) {
-      // definir si se quiere modificar algo en pantalla sino ya se ve por linea de comando
-    }
-
-    function onError(event) {
-      alert(event.data);
-    }
+		var golpe = 0;
+		
+				
 		function preload() {
 			
 			//cargaran los sprites. 			
@@ -98,6 +35,7 @@
 			mundo.load.image('tank','sprites/Tank.png');
 			mundo.load.image('bomb','sprites/bomba.png');
 			mundo.load.image('balaT','sprites/balin.png');
+			mundo.load.image('backg','sprites/back.png');
 			
 			}
 		
@@ -105,9 +43,16 @@
 			
 			//agregar fisica
 			mundo.physics.startSystem(Phaser.Physics.ARCADE);
+			
+			//Camara
+			mascara = game.add.graphics(100, 100);
+			mascara.beginFill(0x000000);
+			mascara.drawCircle(0, 0, 400);
 					
 			//se agrega el fondo. 
-			mundo.add.sprite(0, 0, 'fondo'); 
+			//mundo.add.sprite(0, 0, 'fondo'); 
+			mundo.world.setBounds(0, 0, 1920, 1200);
+			mundo.add.sprite(0, 0, 'backg');
 			
 			//Carga del Dron
 			dron = mundo.add.sprite(750, mundo.world.height - 500,'aereo');
@@ -116,6 +61,9 @@
 			dron.angle = 180;
 			mundo.physics.arcade.enable(dron);
 			dron.body.collideWorldBounds = true;
+			//dron = game.add.graphics(100, 100);
+			//dron.beginFill(0x000000);
+			//dron.drawCircle(0, 0, 400);
 			
 			//carga tanque
 			tanque = mundo.add.sprite(50, mundo.world.height - 65,'tank');
@@ -134,7 +82,7 @@
 			bala.trackSprite(dron, 0, 0, true);
 			
 			// Bala tanque
-			balin = mundo.add.weapon(2, 'balaT');	
+			balin = mundo.add.weapon(1, 'balaT');	
 			mundo.physics.arcade.enable(bala);
 			balin.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
 			balin.bulletAngleOffset = 270;
@@ -161,37 +109,25 @@
 			upT = mundo.input.keyboard.addKey(Phaser.Keyboard.SHIFT);	
 			tiro = mundo.input.keyboard.addKey(Phaser.Keyboard.Z);
 			
-			//Para enviar la informacion
 			
-			datosAEnviar.drones = drones;
-			droneAereo = {
-					"tipo"      : "aereo",
-					"x"			: dron.x.toFixed(2),
-					"y"			: dron.y.toFixed(2),  
-					"angle" 	: dron.angle,
-					"rotation"	: dron.rotation,
-					"bala"		: "false",
-					"bomba"     : "false"
-			}
-			droneTerrestre = {
-					"tipo"      : "tanque",
-					"x"			: tanque.x.toFixed(2),
-					"y"			: tanque.y.toFixed(2),  
-					"angle" 	: tanque.angle,
-					"rotation"	: tanque.rotation,
-					"bala"		: "false",
-					"vida"		: "true"
-			}
-			datosAEnviar.drones.push(droneAereo);
-			datosAEnviar.drones.push(droneTerrestre);
+			// Camara
+			
+			mundo.camera.follow(dron);
 			
 		}
+		
 		
 		function update() {
 			
 			mundo.physics.arcade.overlap(bala.bullets, tanque, disparoDron, null, this);
 			mundo.physics.arcade.overlap(bomba.bullets, tanque, boom, null, this);
 			mundo.physics.arcade.overlap(balin.bullets, dron, disparoTank, null, this);
+			
+			//mask = dron.vision;
+			//mundo.world.mask = mask;
+			//mask.x = dron.body.x + 36;
+			//mask.y = dron.body.y + 36;
+			
 			
 			
 			dron.body.velocity.x = 0;
@@ -202,24 +138,23 @@
 			// CONTROLES AEREO // 
 			if (controles.left.isDown) {
 				dron.angle = 180;
-				enviarCoordenadasDron();	
+				
 				dron.body.velocity.x = -100;
 				
 			}
 			else if (controles.right.isDown) {
 				dron.angle = 360;
 				dron.body.velocity.x = 100;
-				enviarCoordenadasDron();
+			
 			}
 			else if (controles.up.isDown) {
 				dron.angle = 270;
 				dron.body.velocity.y = -100;
-				enviarCoordenadasDron();
+			
 			}
 			else if (controles.down.isDown) {
 				dron.angle = 90;					
-				dron.body.velocity.y = 100;		
-				enviarCoordenadasDron();
+				dron.body.velocity.y = 100;				
 			}
 			
 			// FIN CONTROLES AEREO //
@@ -228,37 +163,25 @@
 			if (derT.isDown) {
 				tanque.angle = 360;
 				tanque.body.velocity.x = 100;
-				enviarCoordenadasTanque();
 				
 			}
 			else if (izqT.isDown) {
 					tanque.angle = 360;
 					tanque.body.velocity.x = -100;
-					enviarCoordenadasTanque();			
+								
 			}
 			else if (upT.isDown) {
 					tanque.angle = 270;
-					enviarCoordenadasTanque();			
+								
 			}
 			// FIN CONTROLES TANQUE
 			
-			/* if(hayFuegoTerrestre){
-				balin.fire();
-				hayFuegoTerrestre = false;
-			}
-			 */	
 			if (tiro.isDown){
-				EnvioDisparoTanque();
 				balin.fire();
 			}
 			
-			/* if(hayFuegoAereo){
-				bala.fire();
-				hayFuegoAereo = false;
-			} */
-				
+			
 			if (fuego.isDown){
-				EnvioDisparoDron();
 				bala.fire();
 			}
 			
@@ -266,93 +189,33 @@
 				bomba.fire();
 			}
 			
-
-			
+		
+							
+						
 		}
 		
-		function disparoDron() {
-			tanque.kill();
-			alert("Ganador Dron Aéreo");
-			EnvioMuerteTanque();
 
+		
+		function disparoDron() {
+				cant++;
+				if(cant > 28){
+					tanque.kill();
+				}
+			
 		}
 		
 		function disparoTank() {
-			
-			dron.kill();
+			golpe++;
+			if(golpe > 28){
+				dron.kill();
+			}
+		}
+		
+		function boom(cant) {
+			tanque.kill();
 			
 		}
 		
-		function boom() {
-			tanque.kill();		
-		}
-		
-	
-		function enviarCoordenadasDron() {
-			for(var i in datosAEnviar.drones) {
-	    		if(datosAEnviar.drones[i].tipo == "aereo"){
-	    			datosAEnviar.drones[i].x = dron.x;
-	    			datosAEnviar.drones[i].y = dron.y;
-	    			datosAEnviar.drones[i].angle = dron.angle;
-	    			datosAEnviar.drones[i].rotation = dron.rotation; 
-	    		}
-	    	}
-			enviar();
-	    	
-			return false;
-
-		}
-		
-		function enviarCoordenadasTanque() {
-			for(var i in datosAEnviar.drones) {
-	    		if(datosAEnviar.drones[i].tipo == "tanque"){
-	    			datosAEnviar.drones[i].x = tanque.x;
-	    			datosAEnviar.drones[i].y = tanque.y;
-	    			datosAEnviar.drones[i].angle = tanque.angle;
-	    			datosAEnviar.drones[i].rotation = tanque.rotation;
-	    		}		    
-	    	}
-			enviar();
-			return false;
-
-		}
-		
-		function EnvioDisparoDron()
-		{
-		 	for(var i in datosAEnviar.drones) {
-	    		if(datosAEnviar.drones[i].tipo == "aereo"){
-	    			datosAEnviar.drones[i].bala = "true";
-	    		}		    
-	    	}
-		 	enviar();
-			
-		}
-		function EnvioDisparoTanque()
-		{
-		 
-			for(var i in datosAEnviar.drones) {
-	    		if(datosAEnviar.drones[i].tipo == "tanque"){
-	    			datosAEnviar.drones[i].bala = "true";
-	    		}		    
-	    	}
-			enviar();
-			
-		}
-		function EnvioMuerteTanque()
-		{
-			
-			for(var i in datosAEnviar.drones) {
-	    		if(datosAEnviar.drones[i].tipo == "tanque"){
-	    			datosAEnviar.drones[i].vida = "false";
-	    		}		    
-	    	}
-			enviar();
-			
-		}
-		function enviar(){
-			var msg = JSON.stringify(datosAEnviar);
-	        webSocket.send(msg);	
-		}
 		
 		
 	</script>

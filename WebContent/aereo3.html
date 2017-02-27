@@ -1,0 +1,96 @@
+<html>
+<head>
+<meta charset="utf-8" />
+<title>War Drones</title>
+	<script type="text/javascript" src="js/phaser.min.js"></script>
+	<script type="text/javascript" src="js/configuraciones.js"></script>
+	<script type="text/javascript" src="js/funcionesWS.js"></script>
+	<script type="text/javascript" src="js/auxiliares.js"></script>
+	<script type="text/javascript" src="js/cargaImagenes.js"></script>
+	<script type="text/javascript" src="js/accionesDrones.js"></script>
+	<script type="text/javascript" src="js/creacionDrones.js"></script>
+	<script type="text/javascript" src="js/envioDeDatos.js"></script>
+</head>
+<body>
+	<script type="text/javascript">
+		var mundo = new Phaser.Game(ancho, alto, Phaser.CANVAS, 'mundo', {preload: preload, create: create, update: update});
+		var vista = "aereo";	
+		
+		function preload() {
+			cargarImagenes();
+		}
+		
+		function create() {
+			
+			creoMapa();		
+			creoTanque();
+			creoDrone();
+			creoYConfiguroBalas();
+			seteoMovimientosDrones();
+			//aumentarAltura = mundo.input.keyboard.addKey(Phaser.Keyboard.I);
+			//disminuirAltura = mundo.input.keyboard.addKey(Phaser.Keyboard.K);	
+		}
+		
+		function update() {
+		
+			mundo.physics.arcade.collide(drone, layer);
+			mundo.physics.arcade.collide(tanque, layer);
+			
+			drone.body.velocity.x = 0;
+			drone.body.velocity.y = 0;
+
+			if(vista == "tanque"){
+				refrezcoControlesTerrestres();
+				mundo.camera.follow(tanque);
+				vision.x = tanque.body.x+36;
+				vision.y = tanque.body.y+20;
+			}else{
+				refrezcoControlesAereos();
+				mundo.camera.follow(drone);
+				vision.x = drone.body.x+36;
+				vision.y = drone.body.y+20;
+				/*
+				if(aumentarAltura.justDown){
+					visionDrone = 100;
+					vision.drawCircle(10,10,visionDrone);	
+					mundo.world.mask = vision;
+				}
+				if(disminuirAltura.justDown){
+					visionDrone = 200;
+					vision.drawCircle(10,10,visionDrone);
+					mundo.world.mask = vision;
+				}
+				*/
+			}
+			disparos();
+			if(devuelveDistanciaObjetos(drone.x, drone.y, tanque.x,tanque.y) < 200)
+				zonaGuerra = true;	
+			else
+				zonaGuerra = false;
+			if(zonaGuerra)
+				console.log("a pelear");
+		}
+		
+		function disparoDrone() {
+			tanque.kill();
+			
+		}
+		
+		function disparoTank() {
+			drone.kill();
+			
+		}
+		
+		function boom() {
+			tanque.kill();
+			
+		}
+	
+
+		
+		
+
+	</script>
+
+</body>
+</html>
